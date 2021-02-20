@@ -20,14 +20,14 @@ Fourchette ton process'... Commande permettant de lancer des sous-processus et d
 
 ### Exemple simple 
 
-	13:09 julien@julieng-solicis ~/fourchette(main)* $ cargo run :print coucou 
+	13:09 julien@julieng ~/fourchette(main)* $ cargo run :print coucou 
 	    Finished dev [unoptimized + debuginfo] target(s) in 0.00s
 	     Running `target/debug/initrust ':print' coucou`
 	>>> coucou 
 
 ### Exemple sans erreur 
 
-	13:09 julien@julieng-solicis ~/fourchette(main)* $ cargo run :env toto=tata :bash echo \$toto :env toto=titi :cmd bash -c "echo \$toto" ; echo "$?"
+	13:09 julien@julieng ~/fourchette(main)* $ cargo run :env toto=tata :bash echo \$toto :env toto=titi :cmd bash -c "echo \$toto" ; echo "$?"
 	    Finished dev [unoptimized + debuginfo] target(s) in 0.00s
 	     Running `target/debug/initrust ':env' toto=tata ':bash' echo '$toto' ':env' toto=titi ':cmd' bash -c 'echo $toto'`
 	titi
@@ -36,7 +36,7 @@ Fourchette ton process'... Commande permettant de lancer des sous-processus et d
 
 ### Exemple avec erreur 
 
-	13:09 julien@julieng-solicis ~/fourchette(main)* $ cargo run :env toto=tata :bash echo \$toto :env toto=titi :cmd bash -c "dsdqsd" ; echo "$?"
+	13:09 julien@julieng ~/fourchette(main)* $ cargo run :env toto=tata :bash echo \$toto :env toto=titi :cmd bash -c "dsdqsd" ; echo "$?"
 	    Finished dev [unoptimized + debuginfo] target(s) in 0.00s
 	     Running `target/debug/initrust ':env' toto=tata ':bash' echo '$toto' ':env' toto=titi ':cmd' bash -c dsdqsd`
 	tata
