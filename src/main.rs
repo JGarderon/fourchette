@@ -33,7 +33,7 @@ enum BoolOrThread {
 struct Action {
   contexte: String, 
   arguments: Vec<String>, 
-  environnement: Vec<(String, String)> 
+  environnement: HashMap<String, String>  
 } 
 
 impl Action {
@@ -42,7 +42,7 @@ impl Action {
     Action { 
       contexte: contexte, 
       arguments: Vec::new(), 
-      environnement: Vec::new() 
+      environnement: HashMap::new() 
     } 
   }
 
@@ -50,8 +50,20 @@ impl Action {
     self.arguments.len() > 0 && self.contexte != "".to_string() 
   } 
 
-  fn superviser( &mut self, env_global: Vec<(String, String)> ) -> BoolOrThread {
-    self.environnement = env_global.clone(); 
+  fn superviser( &mut self, env_global: &Vec<(String, String)> ) -> BoolOrThread {
+    for (cle, valeur) in env_global.iter() {
+        self.environnement.insert( 
+          cle.clone(), 
+          valeur.clone(), 
+        ); 
+    } 
+    let env_local = self.environnement.iter().fold( 
+      Vec::<(String, String)>::new(), 
+      | mut vec, (cle, valeur) | { 
+        vec.push( ( cle.clone(), valeur.clone() ) ); 
+        vec 
+      }  
+    ); 
     return match self.contexte.as_str() { 
       ":print" => { 
           println!( 
@@ -62,13 +74,13 @@ impl Action {
       }, 
       ":bash" => BoolOrThread::Thread( 
           executer_bash( 
-              env_global, 
+              env_local, 
               self.reduction() 
           ) 
       ), 
       ":cmd" => BoolOrThread::Thread( 
           executer_commande( 
-              env_global, 
+              env_local, 
               self.arguments.to_vec().into_iter().map( | c | { c.to_string() } ).collect()  
           ) 
       ), 
@@ -90,7 +102,12 @@ fn executer_bash( environnement: Vec<(String, String)>, commande: String ) -> Jo
   executer_commande( 
     environnement, 
     vec!( 
-      "bash".to_string(), "-c".to_string(), commande 
+      match env::var( "SHELL" ) {
+        Ok( shell ) => shell,
+        Err( _ ) => "bash".to_string(),
+      }, 
+      "-c".to_string(), 
+      commande 
     )
   ) 
 } 
@@ -135,8 +152,14 @@ fn var_env_traduire( chaine: &String ) -> (String, String) {
 }
 
 fn main() { 
-
-  let mut environnement_global = Vec::<(String, String)>::new(); 
+  let mut environnement_global: Vec<(String, String)> = env::vars().fold( 
+    Vec::<(String, String)>::new(), 
+    | mut vec, (cle, valeur) | { 
+      // println!("{:?}", (&cle, &valeur));
+      vec.push( ( cle.clone(), valeur.clone() ) ); 
+      vec 
+    }  
+  ); 
   let mut sous_processus = Vec::<SousProcessus>::new(); 
   let args: Vec<String> = env::args().collect(); 
   let mut action = Action::creer( "".to_string() );  
@@ -153,7 +176,7 @@ fn main() {
               if action.tester() { 
                 sous_processus.push( 
                   SousProcessus::creer( 
-                    action.superviser( environnement_global.clone() ), 
+                    action.superviser( &environnement_global ), 
                     action 
                   )
                 ); 
@@ -172,7 +195,7 @@ fn main() {
               if action.tester() { 
                 sous_processus.push( 
                   SousProcessus::creer( 
-                    action.superviser( environnement_global.clone() ), 
+                    action.superviser( &environnement_global ), 
                     action 
                   )
                 ); 
@@ -189,7 +212,7 @@ fn main() {
   if action.tester() { 
     sous_processus.push( 
       SousProcessus::creer( 
-        action.superviser( environnement_global.clone() ), 
+        action.superviser( &environnement_global ), 
         action 
       )
     ); 
