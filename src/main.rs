@@ -72,6 +72,12 @@ impl Action {
           ); 
           BoolOrThread::Bool( true ) 
       }, 
+      ":log" => BoolOrThread::Thread( 
+          executer_log( 
+              env_local, 
+              self.arguments.to_vec().into_iter().map( | c | { c.to_string() } ).collect()  
+          ) 
+      ), 
       ":bash" => BoolOrThread::Thread( 
           executer_bash( 
               env_local, 
@@ -96,6 +102,28 @@ impl Action {
       | a, b | return a+b+" " 
     );  
   }
+} 
+
+fn executer_log_env( env: &Vec<(String, String)> ) { 
+  env.iter().map( 
+    | (cle, valeur) | { 
+      println!("{:}={:}", cle, valeur);
+    }
+  ).for_each(drop); 
+} 
+
+fn executer_log( environnement: Vec<(String, String)>, parties: Vec<String> ) -> JoinHandle<bool> { 
+  return thread::spawn( 
+    move || { 
+      for partie in parties { 
+        match partie.as_str() { 
+          "env" => executer_log_env( &environnement ),  
+          _ => panic!("action de log invalide : {:?}", partie) 
+        }
+      }
+      return true
+    } 
+  ) 
 } 
 
 fn executer_bash( environnement: Vec<(String, String)>, commande: String ) -> JoinHandle<bool> { 
@@ -155,7 +183,6 @@ fn main() {
   let mut environnement_global: Vec<(String, String)> = env::vars().fold( 
     Vec::<(String, String)>::new(), 
     | mut vec, (cle, valeur) | { 
-      // println!("{:?}", (&cle, &valeur));
       vec.push( ( cle.clone(), valeur.clone() ) ); 
       vec 
     }  
